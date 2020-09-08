@@ -125,7 +125,7 @@ class SearchResults {
         
         count = 0
   
-        has () { 
+        hasIndex () { 
           return this.max === -Infinity || this.values.has(this.count++) 
         }
   
