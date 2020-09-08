@@ -77,7 +77,9 @@ function split (string, ...args) {
   }
 
   const [indexes, settings] = args
-  let res = new SearchResults(string, this, indexes, settings)
+  const indexesParam = indexes !== undefined && [indexes].flat()
+
+  let res = new SearchResults(string, this, indexesParam, settings)
   
   if (typeof indexes === 'number') 
     res = res.getNext()
@@ -272,7 +274,7 @@ class SearchResults {
         const isAdded = 
           needle.index >= freeArea.start && 
           this.addToPipe(needle)
-          
+
         needle = null
         
         if (!isAdded) continue
