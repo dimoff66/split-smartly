@@ -1,0 +1,25 @@
+{
+  "name": "split-smartly",
+  "version": "1.0.0",
+  "description": "spliting text ignoring parts inside quotes, brackets and etc",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dimoff66/split-smartly.git"
+  },
+  "keywords": [
+    "split",
+    "js",
+    "smart",
+    "regexp"
+  ],
+  "author": "Reutov Dmitry",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/dimoff66/split-smartly/issues"
+  },
+  "homepage": "https://github.com/dimoff66/split-smartly#readme"
+}
