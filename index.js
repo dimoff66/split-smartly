@@ -72,7 +72,7 @@ function split (string, ...args) {
     if (typeof args[0] === 'number' || Array.isArray(args[0])) {
       args.push({})
     } else {
-      args.unshift(null)
+      args.unshift(undefined)
     }
   }
 
@@ -183,7 +183,9 @@ class SearchResults {
 
     switch (includeNeedleMode) { 
       case INCLUDE_NEEDLE_SEPARATELY:
-        this.pipe.push(text, needle)
+        this.pipe.push(text)
+        if (needle) 
+          this.pipe.push(needle)
         break 
 
       case INCLUDE_NEEDLE_LEFT:
