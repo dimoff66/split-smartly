@@ -269,7 +269,10 @@ class SearchResults {
       if (!needle) this.addToPipe()
       
       else if (needle.index <= freeArea.end) {  
-        const isAdded = this.addToPipe(needle)
+        const isAdded = 
+          needle.index >= freeArea.start && 
+          this.addToPipe(needle)
+          
         needle = null
         
         if (!isAdded) continue
