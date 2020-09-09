@@ -8,7 +8,7 @@ const defaultSettings = {
   mentions: [],
   ignoreInsideQuotes: true, 
   includeNeedleMode: 'NONE', 
-  ignoreCase: false, 
+  ignoreCase: true, 
   trimResult: true, 
   trimNeedles: false,
 } 
@@ -130,7 +130,7 @@ class SearchResults {
         }
   
         isOverMax () { 
-          return this.count > this.max 
+          return this.max !== -Infinity && this.count > this.max 
         }
       })
     })  
@@ -161,13 +161,25 @@ class SearchResults {
     return [text, needle, needlePos, true]
   }
 
+  pushToPipe (value) {
+    if (this.indexes) {
+      if (!this.indexes.hasIndex()) return
+      
+      if (this.indexes.isOverMax()) {
+        this.isDone = true
+      }
+    }
+
+    this.pipe.push(value)
+  }
+
   addToPipe (pNeedle) {
     const { position } = this
 
     let [text, needle, needlePos, checked] = this.checkNeedle(pNeedle)
     if (!checked) return false
 
-    const { includeNeedleMode, includePositions } = this.settings
+    const { includeNeedleMode, includePositions, mentions } = this.settings
 
     const textIsEmpty = !text
 
@@ -176,38 +188,34 @@ class SearchResults {
       needle  = { text: needle, position: needlePos, isNeedle: true }
     }
 
-    if (this.settings.mentions) {
+    if (mentions) {
       text = typeof text === 'string' ? { text } : text 
-      text.mentions = this.currentMentions.splice(0)
+      const items = this.currentMentions.filter(item => item.index < needlePos)
+      if (items.length) {
+        text.mentions = items.map(item => item.mention) 
+        this.currentMentions = this.currentMentions.filter(item => !items.includes(item))
+      }
     }
 
     switch (includeNeedleMode) { 
       case INCLUDE_NEEDLE_SEPARATELY:
-        this.pipe.push(text)
+        this.pushToPipe(text)
         if (needle) 
-          this.pipe.push(needle)
+          this.pushToPipe(needle)
         break 
 
       case INCLUDE_NEEDLE_LEFT:
-        this.pipe.push([text, needle])
+        this.pushToPipe([text, needle])
         break 
 
       case INCLUDE_NEEDLE_RIGHT:
         if (!textIsEmpty || this.lastNeedle)
-          this.pipe.push([ this.lastNeedle, text ])
+          this.pushToPipe([ this.lastNeedle, text ])
         this.lastNeedle = needle
         break
         
       default:
-        this.pipe.push(text)
-    }
-    
-    if (this.indexes) {
-      if (!this.indexes.hasIndex()) {
-        this.pipe = []
-      } else if (this.indexes.count === this.indexes.max) {
-        this.isDone = true
-      }
+        this.pushToPipe(text)
     }
 
     return !this.pipeIsEmpty
@@ -256,7 +264,7 @@ class SearchResults {
           break 
 
         case ACTION_ADD_FRAGMENT:
-          this.currentMentions.push(fragment)
+          this.currentMentions.push({ mention: fragment, index: match.index })
           break    
       }
       
