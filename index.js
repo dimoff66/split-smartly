@@ -1,13 +1,13 @@
 
-const prepareSearch = (needles, settings) => {
+const prepareSearch = (separators, settings) => {
   const defaultSettings = {
     brackets: [],
     mentions: [],
     ignoreInsideQuotes: true, 
-    includeNeedleMode: 'NONE', 
+    includeSeparatorMode: 'NONE', 
     ignoreCase: true, 
     trimResult: true, 
-    trimNeedles: false,
+    trimSeparators: false,
     check: undefined,
     defaultBrackets: [['(', ')'], ['[', ']'], ['{', '}']]
   } 
@@ -16,7 +16,7 @@ const prepareSearch = (needles, settings) => {
     ...defaultSettings, 
     ...settings,
 
-    needles,
+    separators,
 
     init () {
       if (Array.isArray(this.mentions) || typeof this.mentions === 'string') {
@@ -27,7 +27,7 @@ const prepareSearch = (needles, settings) => {
       return this
         .createBracketsMap()
         .createBracketsSearch()
-        .createneedlesSearch()
+        .createSeparatorsSearch()
     },
 
     merge (settings) {
@@ -87,14 +87,14 @@ const prepareSearch = (needles, settings) => {
       return this
     },
 
-    createneedlesSearch () {
-      const { needles } = this
+    createSeparatorsSearch () {
+      const { separators } = this
 
-      if (typeof needles === 'string' || Array.isArray(needles)) {
-        const pattern = this.arrayToPattern([needles].flat().filter(Boolean))
-        this.needlesSearch = this.createRegExp(pattern)
+      if (typeof separators === 'string' || Array.isArray(separators)) {
+        const pattern = this.arrayToPattern([separators].flat().filter(Boolean))
+        this.separatorSearch = this.createRegExp(pattern)
       } else {
-        this.needlesSearch = needles
+        this.separatorSearch = separators
       }
 
       return this
@@ -124,9 +124,9 @@ const getSplitSmartlyArgs = (args, extraSettings) => {
 }
 
 const splitSmartly = (...args) => {
-  let [string, needles, settings] = getSplitSmartlyArgs(args)
+  let [string, separators, settings] = getSplitSmartlyArgs(args)
 
-  const splitSettings = prepareSearch(needles, settings)
+  const splitSettings = prepareSearch(separators, settings)
 
   const splitFn = split.bind(splitSettings)
   splitFn.getOne = (string, index, settings = {}) => {
@@ -176,10 +176,10 @@ class SearchResults {
   }
 
   prepareSearch () {
-    const { needlesSearch, bracketsSearch, indexes } = this.searchSettings
+    const { separatorSearch, bracketsSearch, indexes } = this.searchSettings
     const indexesArr = [indexes].flat().filter(Boolean)
     
-    Array.from([needlesSearch, bracketsSearch]).forEach(search => { search.lastIndex = 0 })
+    Array.from([separatorSearch, bracketsSearch]).forEach(search => { search.lastIndex = 0 })
 
     Object.assign(this, { 
       brackets: [],
@@ -188,7 +188,7 @@ class SearchResults {
       position: 0,
       isDone: false,
       freeArea: { start: 0, end: undefined },
-      lastNeedle: undefined,
+      lastSeparator: undefined,
       searchString: this.searchSettings.ignoreCase 
         ? this.string.toUpperCase()
         : string,
@@ -230,36 +230,36 @@ class SearchResults {
     return this.searchSettings.trimResult ? text.trim() : text
   }
 
-  trimNeedleText (text) {
-    return this.searchSettings.trimNeedles ? text.trim() : text
+  trimSeparatorText (text) {
+    return this.searchSettings.trimSeparators ? text.trim() : text
   }
 
-  checkNeedle (pNeedle) {
+  checkSeparator (pSeparator) {
     const { string } = this
     const { check, includePositions, mentions } = this.searchSettings
 
-    let [needleText, needlePos] = 
-      pNeedle 
-        ? [pNeedle[0], pNeedle.index] 
+    let [separatorText, separatorPos] = 
+      pSeparator 
+        ? [pSeparator[0], pSeparator.index] 
         : ['', string.length]
 
-    let text = string.substring(this.position, needlePos)
+    let text = string.substring(this.position, separatorPos)
 
-    if (!needleText) this.isDone = true
+    if (!separatorText) this.isDone = true
 
     text = this.trimResultText(text)
-    needleText = this.trimNeedleText(needleText)
+    separatorText = this.trimSeparatorText(separatorText)
 
-    let needle = needleText
+    let separator = separatorText
     if (includePositions) {
       text    = { text, position: this.position }
-      needle  = { text: needle, position: needlePos, isNeedle: true }
+      separator  = { text: separator, position: separatorPos, isSeparator: true }
     }
 
     let restMentions
     if (mentions) {
       text = typeof text === 'string' ? { text } : text 
-      const [properMentions, restItems] = this.getMentions(this.position, needlePos)
+      const [properMentions, restItems] = this.getMentions(this.position, separatorPos)
 
       if (properMentions) {
         text.mentions = properMentions 
@@ -269,21 +269,21 @@ class SearchResults {
 
     if (check) {
       const position = isNaN(this.tempPosition) ? this.position : this.tempPosition 
-      this.tempPosition = needlePos + needleText.length
+      this.tempPosition = separatorPos + separatorText.length
 
-      const textBefore = this.trimResultText(string.substring(position, needlePos))
-      const textAfter = string.substring(needlePos + needleText.length)
+      const textBefore = this.trimResultText(string.substring(position, separatorPos))
+      const textAfter = string.substring(separatorPos + separatorText.length)
 
-      const mentions = this.getMentions(position, needlePos)[0]
+      const mentions = this.getMentions(position, separatorPos)[0]
 
-      if (!check({ string: textBefore, needle, textAfter, mentions })) return []
+      if (!check({ string: textBefore, separator, textAfter, mentions })) return []
       delete this.tempPosition
     } 
 
     if (restMentions) this.currentMentions = restMentions
 
-    this.position = needlePos + needle.length
-    return [text, needle, true]
+    this.position = separatorPos + separator.length
+    return [text, separator, true]
   }
 
   pushToPipe (value) {
@@ -298,28 +298,28 @@ class SearchResults {
     this.pipe.push(value)
   }
 
-  addToPipe (pNeedle) {
+  addToPipe (pSeparator) {
     const { position } = this
 
-    let [text, needle, checked] = this.checkNeedle(pNeedle)
+    let [text, separator, checked] = this.checkSeparator(pSeparator)
     if (!checked) return false
 
-    switch (this.searchSettings.includeNeedleMode) { 
-      case INCLUDE_NEEDLE_SEPARATELY:
+    switch (this.searchSettings.includeSeparatorMode) { 
+      case INCLUDE_SEPARATOR_SEPARATELY:
         this.pushToPipe(text)
-        if (needle) 
-          this.pushToPipe(needle)
+        if (separator) 
+          this.pushToPipe(separator)
         break 
 
-      case INCLUDE_NEEDLE_LEFT:
-        this.pushToPipe([text, needle])
+      case INCLUDE_SEPARATOR_LEFT:
+        this.pushToPipe([text, separator])
         break 
 
-      case INCLUDE_NEEDLE_RIGHT:
+      case INCLUDE_SEPARATOR_RIGHT:
         const textIsEmpty = !(typeof text === 'object' ? text.text : text)
-        if (!textIsEmpty || this.lastNeedle)
-          this.pushToPipe([ this.lastNeedle, text ])
-        this.lastNeedle = needle
+        if (!textIsEmpty || this.lastSeparator)
+          this.pushToPipe([ this.lastSeparator, text ])
+        this.lastSeparator = separator
         break
         
       default:
@@ -331,7 +331,7 @@ class SearchResults {
 
   findFreeArea () {
     const { searchString: string, brackets, freeArea, searchSettings } = this
-    const { bracketsSearch, needlesSearch } = searchSettings 
+    const { bracketsSearch, separatorSearch } = searchSettings 
 
     while (!freeArea.end) {
       const match = bracketsSearch.exec(string)
@@ -366,8 +366,8 @@ class SearchResults {
         case ACTION_CLOSE:
           if (--brackets.length === 0) {
             freeArea.start = bracketsSearch.lastIndex
-            if (needlesSearch && needlesSearch.lastIndex < freeArea.start) 
-              needlesSearch.lastIndex = freeArea.start
+            if (separatorSearch && separatorSearch.lastIndex < freeArea.start) 
+              separatorSearch.lastIndex = freeArea.start
           }  
           break 
 
@@ -386,23 +386,23 @@ class SearchResults {
     return true
   }
 
-  findNeedle (needle) {
+  findSeparator (separator) {
     const { searchString: string, freeArea } = this
-    const { needlesSearch } = this.searchSettings
+    const { separatorSearch } = this.searchSettings
     
     let stopSearching
     while (!stopSearching) {
-      needle = needle || needlesSearch.exec(string)
-      if (!needle) {
+      separator = separator || separatorSearch.exec(string)
+      if (!separator) {
         this.addToPipe()
       }
 
-      else if (needle.index <= freeArea.end) {  
+      else if (separator.index <= freeArea.end) {  
         const isAdded = 
-          needle.index >= freeArea.start && 
-          this.addToPipe(needle)
+          separator.index >= freeArea.start && 
+          this.addToPipe(separator)
 
-        needle = null
+        separator = null
         
         if (!isAdded) continue
       } 
@@ -414,16 +414,16 @@ class SearchResults {
       stopSearching = true
     } 
 
-    return needle
+    return separator
   }
 
   getNext () {
-    let needle
+    let separator
     while (this.pipeIsEmpty && !this.isDone) {
       if (!this.findFreeArea()) 
         this.isDone = true
       else 
-        needle = this.findNeedle(needle)  
+        separator = this.findSeparator(separator)  
     }  
     return this.pipeIsEmpty ? null : this.pipe.shift()
   }
@@ -455,9 +455,9 @@ class SearchResults {
   }
 }
 
-export const INCLUDE_NEEDLE_NONE = 'NONE' 
-export const INCLUDE_NEEDLE_SEPARATELY = 'SEPARATELY'
-export const INCLUDE_NEEDLE_LEFT = 'LEFT'
-export const INCLUDE_NEEDLE_RIGHT = 'RIGHT'
+export const INCLUDE_SEPARATOR_NONE = 'NONE' 
+export const INCLUDE_SEPARATOR_SEPARATELY = 'SEPARATELY'
+export const INCLUDE_SEPARATOR_LEFT = 'LEFT'
+export const INCLUDE_SEPARATOR_RIGHT = 'RIGHT'
 
 export default splitSmartly
