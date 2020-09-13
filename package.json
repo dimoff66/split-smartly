@@ -1,6 +1,6 @@
 {
   "name": "split-smartly",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "spliting text ignoring parts inside quotes, brackets and etc",
   "main": "index.js",
   "scripts": {
