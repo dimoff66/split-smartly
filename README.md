@@ -1,16 +1,15 @@
 # split-smartly
 
-> split strings, ignoring parts inside quotes and brackets. Can be easily tuned with a lot of flexible options
+> split strings by separator(s), ignoring text inside quotes and brackets. Can be easily tuned with a lot of flexible options
 
 ## What is it for ?
-Sometimes we need to split string, ignoring text inside quotes and/or brackets or any other symbols
-for example if we want to parse sql query string, where fields separated by comma
+Sometimes we need to split string, ignoring separators inside quotes and/or brackets(or any other symbols).
+For example in case when we want to parse sql fields list, separated by comma
 ```sql
 SELECT 1 as numberField, "3,4,5" as stringField, MAX(3, 5) as calculatedField
 ```
-we will not get proper result using standard split function
-
-so splitSmartly function will manage to do it easily and nicely
+Obviously, commas inside string and commas, separated MAX-function parametetrs, should be ignored.
+Original split function of String object will not return proper result, so splitSmartly is done to manage such kind of splitting easily and nicely
 
 ## Install
 
@@ -33,14 +32,14 @@ splitSmartly([text[, separators[, options]]])
 
 | parameter | description |
 | --------- | ----------- |
-| text (optional) | text to split, can be skipped, if we do not want to get result immidiately, but want to function, which can be called just later passing any text in it |
-| separators | can be string or an array of strings or regular expression, which will split text |
+| text (optional) | The text to be splitted. This parameter can be skipped if we do not need to get the immediate result, but want to get a function, that later can be called by passing a text parameter to it |
+| separators | can be string or an array of strings or regular expression, which will be searched to split text |
 | options (optional) | an object of options to tune the search |
 
 
 ## Return value
-- if text parameter is not skipped, function will return an array of results. The format of array items will be depend on options. In a simpliest case it is an array of string between separators.
-- If text parameter is skipped, function will return another function with separators and options, bound to it, so we can call this function many times with different text parameter values
+- if text parameter is not skipped, function will return an array of results. The format of array items will be depend on options. In a simpliest case it is an array of strings between separators, found in text.
+- If text parameter is skipped, function will return another function with separators and options bound to it, so we can call this function any times we want with different text parameter values
 
 ## Examples
 If we do not provide any options, splitSmartly function ignores separators inside quotes
