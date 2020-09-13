@@ -5,7 +5,9 @@
 ## What is it for ?
 Sometimes we need to split string, ignoring text inside quotes and/or brackets or any other symbols
 for example if we want to parse sql query string, where fields separated by comma
+```sql
 SELECT 1 as numberField, "3,4,5" as stringField, MAX(3, 5) as calculatedField
+```
 we will not get proper result using standard split function
 
 so splitSmartly function will manage to do it easily and nicely
@@ -25,14 +27,15 @@ import splitSmartly from 'split-smartly'
 ```
 
 ## Syntax
+```sh
 splitSmartly([text[, separators[, options]]])
+```
 
-text | optional - text to split, can be skipped, if we do not want to get result immidiately, but
-  want to function, which can be called just later passing any text in it
-
-separators - can be string or an array of strings or regular expression, which will split text
-
-options - an object of options to tune the search
+| parameter | description |
+| --------- | ----------- |
+| text (optional) | text to split, can be skipped, if we do not want to get result immidiately, but want to function, which can be called just later passing any text in it |
+| separators | can be string or an array of strings or regular expression, which will split text |
+| options (optional) | an object of options to tune the search |
 
 
 ## Return value
@@ -43,17 +46,17 @@ options - an object of options to tune the search
 If we do not provide any options, splitSmartly function ignores separators inside quotes
 
 ```js
-res = splitSmartly('one / two / "three / four" / five / six', '/');
-// res: ['one','two','"three / four"','five','six']
+res = splitSmartly('one _ two _ "three _ four" _ five _ six', '_');
+// res: ['one', 'two', '"three _ four"', 'five', 'six']
 ```
 
-If we set option brackets to true it will prevent from searching separators inside 
+If we set brackets option to true it will prevent from searching separators inside 
 round, square and figure brackets
 ```js
-res = splitSmartly('(one / two) / "three / four" / five / six', '/', {
+res = splitSmartly('(one _ two) _ "three _ four" _ five _ six', '_', {
   brackets: true
 });
-// res: ['(one / two)','"three / four"','five','six']
+// res: ['(one _ two)', '"three _ four"', 'five', 'six']
 ```
 
 If we assign array of tuples to brackets option, it will prevent from searching separator inside any couple of strings, passed to it
@@ -61,20 +64,21 @@ If we assign array of tuples to brackets option, it will prevent from searching 
 res = splitSmartly('(one / two) / "three / four" / <<five / six>>', '/', {
   brackets: [['(', ')'], ['<<', '>>']]
 });
-// res: ['(one / two)','"three / four"','<<five / six>>']
+// res: ['(one / two)', '"three / four"', '<<five / six>>']
 ```
 
 We can use array of strings as separators parameter, so text will be splited in any position
 where one of these strings occur
 ```js
 res = splitSmartly('SELECT best FROM life', ['SELECT ', 'FROM ']);
-// res: ['','best','life']
+// res: ['', 'best', 'life']
 ```
 
 we can set includeSeparatorMode option, it will include separator to result array
-"SEPARATELY" - separator will be returned as distinct element of result array
-"RIGHT" - separator will be returned in tupple together with string right from it
-"LEFT" - separator will be returned in tupple together with string left from it
+
+- "SEPARATELY" - separator will be returned as distinct element of result array
+- "RIGHT" - separator will be returned in tupple together with string right from it
+- "LEFT" - separator will be returned in tupple together with string left from it
 
 ```js
 res = splitSmartly('SELECT best FROM life', ['SELECT ', 'FROM '], {
@@ -125,6 +129,6 @@ res = splitSmartly('One | Two | Three | Four', '|', {
 // res: ['Two','Four']
 ```
 
-to be 
+to be continued...
 
 
