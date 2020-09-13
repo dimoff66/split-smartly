@@ -1,6 +1,6 @@
 # split-smartly
 
-> split ignoring quotes and brackets with a lot of flexible options
+> split strings, ignoring parts inside quotes and brackets. Can be easily tuned with a lot of flexible options
 
 ## What is it for ?
 Sometimes we need to split string, ignoring text inside quotes and/or brackets or any other symbols
