@@ -86,13 +86,14 @@ test('test settings props 2', () => {
   expect(res).toEqual('param1, param2, param3')
 })
 
-// const logIt = fn => {
-//   const exprText = fn.toString().split('\n').slice(1, -1).join('\n').substring(9).replace('Smart', 'Smartly')
-//   const res = JSON.stringify(fn()).replace(/\\"/g, '@').replace(/"/g, '\'').replace(/@/g, '"')
-//   console.log('res = ' + exprText + '\n// res: ' + res)
-// }
+const logIt = fn => {
+  const exprText = fn.toString().split('\n').slice(1, -1).join('\n').substring(9).replace('Smart', 'Smartly')
+  const res = JSON.stringify(fn()).replace(/\\"/g, '@').replace(/"/g, '\'').replace(/@/g, '"')
+  console.log('res = ' + exprText + '\n// res: ' + res)
+}
 
-// const splitSmart = splitSmartly
+const splitSmart = splitSmartly
+// logIt(() => splitSmart('select best FROM life', ['SELECT ', 'FROM '], { includeSeparatorMode: 'RIGHT', ignoreCase: false }))
 // logIt(() => splitSmart('one / two / "three / four" / five / six', '/'))
 // logIt(() => splitSmart('(one / two) / "three / four" / five / six', '/', { brackets: true }))
 // logIt(() => splitSmart('(one / two) / "three / four" / <<five / six>>', '/', { brackets: [['(', ')'], ['<<', '>>']] }))
