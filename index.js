@@ -68,14 +68,31 @@ const prepareSearch = (separators, settings) => {
       let { brackets = [], ignoreInsideQuotes } = this 
       if (brackets === true) {
         brackets = this.defaultBrackets
+      } else if (typeof brackets === 'object' && !Array.isArray(brackets)) {
+        brackets = Object.entries(brackets)
+      } else if (typeof brackets === 'string') {
+        brackets = brackets
+          .split(',')
+          .map(pairText => {
+            let pair = pairText.trim().split(' ')
+            if (pair.length !== 2) {
+              if (first(pair).length === 2) {
+                pair = first(pair).split('')
+              } else {
+                throw new Error(`open and close parts of brackets should be separated by space symbol`)
+              }
+            }
+            return pair
+          })
       }
+
       if (ignoreInsideQuotes) {
-        brackets.unshift([`'`, null, true], [`"`, null, true])
+        brackets.unshift([`'`,,, true], [`"`,,, true])
       }
 
       this.bracketsMap = brackets.reduce((map, [open, close, ...args])=> {
         if (args.length === 1 && !this.searchWithin) {
-            args.unshift(undefined) 
+          args.unshift(undefined) 
         }
         let [searchLevels = this.searchWithin && 1, ignoreMode] = args
         if (typeof searchLevels === 'number') {
@@ -121,20 +138,31 @@ const prepareSearch = (separators, settings) => {
 }  
 
 const getSplitSmartlyArgs = (args, extraSettings) => {
-  if (args.length === 2) {
-    if (typeof args[1] === 'string' || Array.isArray(args[1])) 
-      args.push({})
-    else 
-      args.unshift(null)
+  if (args.length === 3) {
+    if(!extraSettings) return args
+  } 
+  
+  else if (args.length === 1) {
+    if (typeof args[0] === 'string') {
+      args.push(',', {})
+    } else if (typeof args[0] === 'object') {
+      args.unshift(null, ',')
+    }
   }
 
-  else if (args.length < 2) 
-    throw new Error('Not enough arguments passed to splitSmartly function!!!')
+  else if (args.length === 2) {
+    if (typeof args[1] === 'string' || Array.isArray(args[1])) {
+      args.push({})
+    } else {
+      args.unshift(null)
+    }  
+  }
 
-  else if (args.length > 3) 
+  else if (args.length > 3) {
     throw new Error('Too much arguments passed to splitSmartly function!!!')
+  }
 
-  if (extraSettings) args[2] = { ...args[2], extraSettings }
+  if (extraSettings) args[2] = { ...args[2], ...extraSettings }
 
   return args
 }
@@ -143,31 +171,33 @@ const splitSmartly = (...args) => {
   let [string, separators, settings] = getSplitSmartlyArgs(args)
 
   const splitSettings = prepareSearch(separators, settings)
-
-  const splitFn = split.bind(splitSettings)
-  splitFn.getOne = (string, index, settings = {}) => {
-    if (isNaN(index)) 
-      throw new Error ('second parameter of `getOne` function should be index')
-    
-    return splitFn(string, { ...settings, indexes: index })
-  }
-  
-  splitFn.getFirst = (string, settings = {}) => {
-    return splitFn(string, { ...settings, indexes: 0 })
-  }
-
-  splitFn.getIndexes = (string, indexes, settings = {}) => {
-    if (!Array.isArray(indexes)) 
-      throw new Error ('second parameter of `getOne` function should be array of indexes')
-    
-    return splitFn(string, { ...settings, indexes })
-  }
-
-  splitFn.getIterator = (string, settings = {}) => {
-    return splitFn(string, { ...settings, returnIterator: true })
-  }
+  const splitFn = createSplitFunction(splitSettings)
 
   return string !== null ? splitFn(string) : splitFn
+}
+
+splitSmartly.searchWithin = (...args) => {
+  if (args.length === 1) {
+    if (typeof args[0] === 'string') {
+      args.push(null, {})
+    } else {
+      args.unshift(null)
+    }
+  }
+
+  if (typeof args[1] !== 'object' || !args[1].brackets) {
+    args[1] = { brackets: args[1] }
+  }
+  
+  args.splice(1, 0, null)
+
+  args = getSplitSmartlyArgs(args, { searchWithin: true })
+  return splitSmartly(...args)
+}
+
+splitSmartly.search = (...args) => {
+  args = getSplitSmartlyArgs(args, { includeSeparatorMode: INCLUDE_SEPARATOR_ONLY })
+  return splitSmartly(...args)
 }
 
 function split (string, settings) {
@@ -182,6 +212,34 @@ function split (string, settings) {
 
   return res
 } 
+
+const createSplitFunction = (settings) => {
+  const splitFn = split.bind(settings)
+
+  return Object.assign(splitFn, {
+    getOne (string, index, settings = {}) {
+      if (isNaN(index)) 
+        throw new Error ('second parameter of `getOne` function should be index')
+      
+      return splitFn(string, { ...settings, indexes: index })
+    },
+  
+    getFirst (string, settings = {}) {
+      return splitFn(string, { ...settings, indexes: 0 })
+    },
+
+    getIndexes (string, indexes, settings = {}) {
+      if (!Array.isArray(indexes)) 
+        throw new Error ('second parameter of `getOne` function should be array of indexes')
+      
+      return splitFn(string, { ...settings, indexes })
+    },
+
+    getIterator (string, settings = {}) {
+      return splitFn(string, { ...settings, returnIterator: true })
+    }
+  })
+}
 
 class SearchResults {
   constructor (string, searchSettings) {

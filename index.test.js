@@ -84,6 +84,12 @@ test('test settings props 2', () => {
     indexes: 0 
   })
   expect(res).toEqual('param1, param2, param3')
+
+  res = splitSmartly.searchWithin('1, 2 (3, 4), 5, (6, 7)', {'(': ')'} )
+  expect(res).toEqual(['3, 4', '6, 7'])
+
+  res = splitSmartly.searchWithin('1, 2 (3, 4), 5, {6, 7}', '{}' )
+  expect(res).toEqual(['6, 7'])
 })
 
 const logIt = fn => {
