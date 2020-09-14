@@ -43,7 +43,7 @@ splitSmartly([text[, separators[, options]]])
 
 ## Examples
 #### example 1 - call without options
-Without any options, splitSmartly function b y default ignores separators inside quotes (to avoid such behaviour we can set ignoreInsideQuotes option to false)
+Without any options, splitSmartly function by default ignores separators inside quotes (to avoid such behaviour we can set ignoreInsideQuotes option to false)
 
 ```js
 res = splitSmartly('one _ two _ "three _ four" _ five _ six', '_');
