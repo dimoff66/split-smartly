@@ -20,8 +20,14 @@ const prepareSearch = (separators, settings) => {
 
     init () {
       if (Array.isArray(this.mentions) || typeof this.mentions === 'string') {
-        const mentions = [this.mentions].flat().filter(Boolean)
-        this.mentions = mentions.length > 0 && new Set(mentions)
+        const mentionsMap = 
+          [this.mentions].flat().filter(Boolean).reduce((map, keyword) => {
+            const key = this.ignoreCase ? keyword.toUpperCase() : keyword
+            map[key] = keyword
+            return map
+          }, {})
+        
+        this.mentions = !isEmpty(mentionsMap) && mentionsMap
       }
         
       return this
@@ -64,11 +70,18 @@ const prepareSearch = (separators, settings) => {
         brackets = this.defaultBrackets
       }
       if (ignoreInsideQuotes) {
-        brackets.push([`'`, null, true], [`"`, null, true])
+        brackets.unshift([`'`, null, true], [`"`, null, true])
       }
 
-      this.bracketsMap = brackets.reduce((map, [open, close, ignoreMode])=> {
-        map[open] = { open, ignoreMode, close: close || open }
+      this.bracketsMap = brackets.reduce((map, [open, close, ...args])=> {
+        if (args.length === 1 && !this.searchWithin) {
+            args.unshift(undefined) 
+        }
+        let [searchLevels = this.searchWithin && 1, ignoreMode] = args
+        if (typeof searchLevels === 'number') {
+          searchLevels = [searchLevels]
+        }
+        map[open] = { open, ignoreMode, searchLevels, close: close || open }
         return map
       }, {}) 
 
@@ -78,7 +91,7 @@ const prepareSearch = (separators, settings) => {
     createBracketsSearch () {
       const patternParts = Object.entries(this.bracketsMap)
         .flatMap(([, { close, open }]) => close !== open ? [open, close] : open)
-        .concat(this.mentions ? [...this.mentions] : [])
+        .concat(Object.keys(this.mentions || {}))
         .filter(Boolean)
 
       const pattern = this.arrayToPattern(patternParts)
@@ -93,8 +106,11 @@ const prepareSearch = (separators, settings) => {
       if (typeof separators === 'string' || Array.isArray(separators)) {
         const pattern = this.arrayToPattern([separators].flat().filter(Boolean))
         this.separatorSearch = this.createRegExp(pattern)
-      } else {
+      } else if (separators) {
         this.separatorSearch = separators
+        this.ignoreCase = separators.ignoreCase
+      } else {
+        this.separatorSearch = /empty/
       }
 
       return this
@@ -118,7 +134,7 @@ const getSplitSmartlyArgs = (args, extraSettings) => {
   else if (args.length > 3) 
     throw new Error('Too much arguments passed to splitSmartly function!!!')
 
-  if (extraSettings) args[2] = {...args[2], extraSettings}
+  if (extraSettings) args[2] = { ...args[2], extraSettings }
 
   return args
 }
@@ -167,8 +183,6 @@ function split (string, settings) {
   return res
 } 
 
-
-
 class SearchResults {
   constructor (string, searchSettings) {
     Object.assign(this, { string, searchSettings })
@@ -179,7 +193,7 @@ class SearchResults {
     const { separatorSearch, bracketsSearch, indexes } = this.searchSettings
     const indexesArr = [indexes].flat().filter(Boolean)
     
-    Array.from([separatorSearch, bracketsSearch]).forEach(search => { search.lastIndex = 0 })
+    for (const regExp of [separatorSearch, bracketsSearch]) regExp.lastIndex = 0
 
     Object.assign(this, { 
       brackets: [],
@@ -189,11 +203,12 @@ class SearchResults {
       isDone: false,
       freeArea: { start: 0, end: undefined },
       lastSeparator: undefined,
-      searchString: this.searchSettings.ignoreCase 
-        ? this.string.toUpperCase()
-        : string,
+      searchString: (this.searchSettings.ignoreCase && 
+        !this.searchSettings.separatorSearch.ignoreCase)
+          ? this.string.toUpperCase()
+          : this.string,
 
-      indexes: indexesArr.length && {
+      indexes: !isEmpty(indexesArr) && {
         values: new Set(indexesArr),
         max: Math.max(...indexesArr), 
         count: 0,
@@ -210,7 +225,7 @@ class SearchResults {
   }
 
   get pipeIsEmpty () {
-    return this.pipe.length === 0
+    return isEmpty(this.pipe)
   }
 
   getMentions (indexFrom, indexTo) {
@@ -238,28 +253,36 @@ class SearchResults {
     const { string } = this
     const { check, includePositions, mentions } = this.searchSettings
 
-    let [separatorText, separatorPos] = 
-      pSeparator 
-        ? [pSeparator[0], pSeparator.index] 
-        : ['', string.length]
+    let { 
+      0: separatorText = '', 
+      index: separatorPosition = string.length, 
+      searchWithinData } = pSeparator || {}
 
-    let text = string.substring(this.position, separatorPos)
+    const separatorLength = separatorText.length
 
+    const lastPosition = searchWithinData
+      ? searchWithinData.openPosition
+      : this.position
+
+    let text = string.substring(lastPosition, separatorPosition)
     if (!separatorText) this.isDone = true
 
     text = this.trimResultText(text)
     separatorText = this.trimSeparatorText(separatorText)
 
-    let separator = separatorText
+    let separator = searchWithinData 
+      ? [searchWithinData.open, searchWithinData.close] 
+      : separatorText
+
     if (includePositions) {
-      text    = { text, position: this.position }
-      separator  = { text: separator, position: separatorPos, isSeparator: true }
+      text    = { text, position: lastPosition }
+      separator  = { text: separator, position: separatorPosition, isSeparator: true }
     }
 
     let restMentions
     if (mentions) {
       text = typeof text === 'string' ? { text } : text 
-      const [properMentions, restItems] = this.getMentions(this.position, separatorPos)
+      const [properMentions, restItems] = this.getMentions(lastPosition, separatorPosition)
 
       if (properMentions) {
         text.mentions = properMentions 
@@ -267,22 +290,30 @@ class SearchResults {
       }
     }
 
-    if (check) {
-      const position = isNaN(this.tempPosition) ? this.position : this.tempPosition 
-      this.tempPosition = separatorPos + separatorText.length
+    if (check && separatorText) {
+      const position = isNaN(this.tempPosition) ? lastPosition : this.tempPosition 
+      this.tempPosition = separatorPosition + separatorText.length
 
-      const textBefore = this.trimResultText(string.substring(position, separatorPos))
-      const textAfter = string.substring(separatorPos + separatorText.length)
+      const self = this
+      const checkParams = {
+        getString: once(() => self.trimResultText(string.substring(position, separatorPosition))),
+        getTextAfter: once(() => string.substring(separatorPosition + separatorText.length)),
+        getMentions: once(() => self.getMentions(position, separatorPosition)[0]),
+        getSeparator: once(() => separatorText),
 
-      const mentions = this.getMentions(position, separatorPos)[0]
+        get string () { return this.getString() },
+        get textAfter () { return this.getTextAfter() },
+        get mentions () { return this.getMentions() },
+        get separator () { return this.getSeparator() }
+      }
 
-      if (!check({ string: textBefore, separator, textAfter, mentions })) return []
+      if (!check(checkParams)) return []
       delete this.tempPosition
     } 
 
     if (restMentions) this.currentMentions = restMentions
 
-    this.position = separatorPos + separator.length
+    this.position = separatorPosition + separatorLength
     return [text, separator, true]
   }
 
@@ -299,8 +330,6 @@ class SearchResults {
   }
 
   addToPipe (pSeparator) {
-    const { position } = this
-
     let [text, separator, checked] = this.checkSeparator(pSeparator)
     if (!checked) return false
 
@@ -321,6 +350,10 @@ class SearchResults {
           this.pushToPipe([ this.lastSeparator, text ])
         this.lastSeparator = separator
         break
+
+      case INCLUDE_SEPARATOR_ONLY:
+        if (separator) this.pushToPipe(separator)
+        break 
         
       default:
         this.pushToPipe(text)
@@ -329,56 +362,56 @@ class SearchResults {
     return !this.pipeIsEmpty
   }
 
-  findFreeArea () {
+  findBrackets () {
     const { searchString: string, brackets, freeArea, searchSettings } = this
-    const { bracketsSearch, separatorSearch } = searchSettings 
+    const { bracketsSearch, separatorSearch, searchWithin } = searchSettings 
 
-    while (!freeArea.end) {
+    const condition = searchWithin ? () => this.pipeIsEmpty : () => !freeArea.end
+
+    while (condition()) {
       const match = bracketsSearch.exec(string)
       if (!match) {
-        if (isNaN(freeArea.start)) return false
+        if (searchWithin || isNaN(freeArea.start)) return false
 
         freeArea.end = string.length - 1
         continue
       }
       
       const fragment = match[0]
-      const { close, ignoreMode } = brackets[brackets.length - 1] || {}
+      const { close, ignoreMode, searchLevels } = last(brackets) || {}
 
       let block
-      const ACTION_CLOSE = 1, ACTION_OPEN = 2, ACTION_ADD_FRAGMENT = 3
+      const ACTION_CLOSE = 1, ACTION_OPEN = 2, ACTION_ADD_FRAGMENT = 3, ACTION_NULL = 4
 
-      const action = function getAction() {
-        if (fragment === close) 
-          return ACTION_CLOSE
-
-        if (ignoreMode) return 
-
-        block = searchSettings.bracketsMap[fragment]
-        if (block) 
-          return ACTION_OPEN
-
-        if (searchSettings.mentions && searchSettings.mentions.has(fragment)) 
-          return ACTION_ADD_FRAGMENT
-      } ()
-
+      const action = 
+        (fragment === close && ACTION_CLOSE) ||
+        (ignoreMode && ACTION_NULL) ||
+        ((block = searchSettings.bracketsMap[fragment]) && ACTION_OPEN) ||
+        (searchSettings.mentions?.[fragment] && ACTION_ADD_FRAGMENT)
+      
       switch (action) {
         case ACTION_CLOSE:
-          if (--brackets.length === 0) {
-            freeArea.start = bracketsSearch.lastIndex
+          const bracketData = brackets.pop()
+          if (searchWithin) {
+            if (searchLevels === true || searchLevels.includes(brackets.length + 1)) {
+              this.addToPipe(Object.assign(match, { searchWithinData: bracketData }))
+            }
+          } else if (isEmpty(brackets)) {
+            freeArea.start = match.index
             if (separatorSearch && separatorSearch.lastIndex < freeArea.start) 
               separatorSearch.lastIndex = freeArea.start
           }  
           break 
 
         case ACTION_OPEN:
-          brackets.push(block)
-          if (brackets.length === 1) 
+          brackets.push({...block, openPosition: match.index + fragment.length })
+          if (brackets.length === 1 && !searchWithin) 
             freeArea.end = match.index
           break 
 
         case ACTION_ADD_FRAGMENT:
-          this.currentMentions.push({ mention: fragment, index: match.index })
+          const mention = searchSettings.mentions[fragment]
+          this.currentMentions.push({ mention, index: match.index })
           break    
       }  
     }
@@ -420,10 +453,11 @@ class SearchResults {
   getNext () {
     let separator
     while (this.pipeIsEmpty && !this.isDone) {
-      if (!this.findFreeArea()) 
+      if (!this.findBrackets()) {
         this.isDone = true
-      else 
+      } else if (!this.searchSettings.searchWithin) { 
         separator = this.findSeparator(separator)  
+      }
     }  
     return this.pipeIsEmpty ? null : this.pipe.shift()
   }
@@ -455,9 +489,38 @@ class SearchResults {
   }
 }
 
+const once = fn => {
+  let value, hasValue
+  return function (...args) {
+    if (!hasValue) {
+      value = fn(...args)
+      hasValue = true
+    }
+    return value
+  }
+}
+
+const isEmpty = value => {
+  if (!value) return true 
+
+  if (Array.isArray(value)) {
+    if (value.length === 0) return true
+  }
+
+  else if (typeof value === 'object') {
+    if (Object.keys(value).length === 0) return true
+  }
+
+  return false
+}
+
+const first = value => value[0]
+const last = value => value[value.length - 1]
+
 export const INCLUDE_SEPARATOR_NONE = 'NONE' 
 export const INCLUDE_SEPARATOR_SEPARATELY = 'SEPARATELY'
 export const INCLUDE_SEPARATOR_LEFT = 'LEFT'
 export const INCLUDE_SEPARATOR_RIGHT = 'RIGHT'
+export const INCLUDE_SEPARATOR_ONLY = 'ONLY'
 
 export default splitSmartly
