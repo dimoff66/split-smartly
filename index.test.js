@@ -8,7 +8,6 @@ const querySeparators = ['WHERE ', 'SELECT ', 'FROM ']
 const splitQuery = splitSmartly(querySeparators, { brackets: true })
 
 test('test add needles modes', () => {
-
   // MODE NONE
   let res = splitSmartly(numbersText, ',', { brackets: true })
   expect(res).toEqual(['1', '2 (3, 4)', '"5,6"'])
@@ -24,6 +23,18 @@ test('test add needles modes', () => {
   // MODE RIGHT
   res = splitQuery(queryText, { includeSeparatorMode: 'RIGHT' })
   expect(res).toEqual([['SELECT ', 'love, joy'], ['FROM ', 'life'], ['WHERE ', 'nobody and nothing']])
+
+  // MODE ONLY
+  res = splitSmartly(
+    'sky1 bird1, (sky2, bird2)', 
+    /(sky|bird)\d/gi, 
+    { brackets: true, includeSeparatorMode: 'ONLY' }
+  )
+  expect(res).toEqual(['sky1', 'bird1'])
+
+  // TEST REGEXP
+  res = splitSmartly('p1: first p2: second p3:third', /p\d:/gi, { includeSeparatorMode: 'RIGHT' })
+  expect(res).toEqual([['p1:', 'first'], ['p2:', 'second'], ['p3:', 'third']])
 })
 
 test('test call with indexes', () => {
@@ -40,22 +51,22 @@ test('test call with indexes', () => {
   expect(res).toEqual(['love, joy', 'nobody and nothing'])
 })
 
-test('test different settings props', () => {
+test('test settings props 1', () => {
   let res = splitQuery(queryText, { 
     includeSeparatorMode: 'SEPARATELY' ,
     trimSeparators: true,
     trimResult: false,
     indexes: [1, 2]
   })
-  expect(res).toEqual(['SELECT', ' love, joy '])
+  expect(res).toEqual(['SELECT', 'love, joy '])
 
   // test mentions
   res = splitSmartly
-    (querySeparators, { brackets: true, mentions: ['LOVE']}).getIndexes (queryText, [1, 2])
-  expect(res).toEqual([ { mentions: ["LOVE"], text: "love, joy" }, { text: 'life' } ])
+    (querySeparators, { brackets: true, mentions: ['love']}).getIndexes (queryText, [1, 2])
+  expect(res).toEqual([ { mentions: ["love"], text: "love, joy" }, { text: 'life' } ])
 
   res = splitSmartly('8 - 10 * -problems', '-', { 
-    check: ({ string, separator }) => separator !== '-' || !string.endsWith('*') 
+    check: info => !info.string.endsWith('*') 
   })
   expect(res).toEqual(['8', '10 * -problems'])
 
@@ -64,6 +75,15 @@ test('test different settings props', () => {
     check: ({ mentions, separator }) => !separator || !mentions
   })
   expect(res).toEqual([{ text: 'life is long'}, { text: 'love BETWEEN pleasure AND pain', mentions: [' BETWEEN ']}])
+})
+
+test('test settings props 2', () => {
+  let res = splitSmartly('function (param1, param2, param3)', null, { 
+    brackets: [['(', ')']], 
+    searchWithin: true,
+    indexes: 0 
+  })
+  expect(res).toEqual('param1, param2, param3')
 })
 
 // const logIt = fn => {
