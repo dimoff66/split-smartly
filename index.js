@@ -143,9 +143,13 @@ const getSplitSmartlyArgs = (args, extraSettings) => {
   } 
   
   else if (args.length === 1) {
-    if (typeof args[0] === 'string') {
+    const arg = first(args)
+    if (typeof arg === 'string') {
       args.push(',', {})
-    } else if (typeof args[0] === 'object') {
+    } else if (Array.isArray(arg)) {
+      args.unshift(null)
+      args.push({})
+    } else if (typeof arg === 'object') {
       args.unshift(null, ',')
     }
   }
