@@ -43,7 +43,7 @@ test('test call with indexes', () => {
   expect(res.getNext()).toBe('')
   expect(res.getNext()).toBe('SELECT ')
   expect(res.getNext()).toBe('love, joy')
-  expect(res.getRest().toEqual(['FROM ', 'life', 'WHERE ', 'nobody and nothing']))
+  expect(res.getRest()).toEqual(['FROM ', 'life', 'WHERE ', 'nobody and nothing'])
 
   res = splitQuery.getOne(queryText, 2)
   expect(res).toBe('life')
