@@ -53,9 +53,11 @@ res = splitSmartly('one _ two _ "three _ four" _ five _ six', '_');
 #### 2 - call with brackets option set to true
 Set brackets option to true to prevent from searching separators inside brackets (round, square and figure ones)
 ```js
-res = splitSmartly('(one _ two) _ "three _ four" _ five _ six', '_', {
-  brackets: true
-});
+res = splitSmartly(
+  '(one _ two) _ "three _ four" _ five _ six', 
+  '_', 
+  { brackets: true }
+);
 // res: ['(one _ two)', '"three _ four"', 'five', 'six']
 ```
 
@@ -63,14 +65,20 @@ res = splitSmartly('(one _ two) _ "three _ four" _ five _ six', '_', {
 Strings for bracket option can be assigned in next formats:
 - array of tupples [['(', ')'], ['<<', '>>']], where in each tupple first element is opening bracket and second one is closing bracket
 - object { '(': ')', '<<': '>>' } where in each key/value pair key is opening bracket and value is closing
-- string - it is comma separted string, where each part is pair of brackets, separated with space symbol. In case if openiong and closing string has just one character - space symbol can be skipped
+- string - it is comma separted string, where each part is pair of brackets, separated with space symbol. In case if opening and closing string has just one character - space symbol can be skipped
 '(),<< >>'
 
 ```js
-res = splitSmartly('(one / two) / "three / four" / <<five / six>>', '/', {
-  brackets: { '(': ')', '<<': '>>' }
-});
-// res: ['(one / two)', '"three / four"', '<<five / six>>']
+res = splitSmartly(
+  '(one / two) / "three / four" / <<five / six>>', 
+  '/', 
+  { brackets: { '(': ')', '<<': '>>' } }
+);
+// res: [
+//  '(one / two)', 
+//  '"three / four"', 
+//  '<<five / six>>'
+// ]
 ```
 
 #### 4 - call with array of strings as separator parameter
@@ -125,12 +133,18 @@ res = splitSmartly('select best FROM life', ['SELECT ', 'FROM '], { includeSepar
 ```
 
 #### 8 - call with mentions option
-Set mentions option as string or array of strings to search them inside text, so found results will have mentions property with strings which each result part consists
+Assign string or array of strings to mentions option to search these strings in each result string. Then function will return array of objects, where property text will have text between separators and if it includes one or more strings from mentions option it will have mentions property with array of found mentions.
 ```js
-res = splitSmartly('Peter loves Mary and Mary loves Johnny and Jonny loves Steve', 'AND', {
-  mentions: ['STEVE', 'PETER']
-});
-// res: [{'text':'Peter loves Mary','mentions':['PETER']},{'text':'Mary loves Johnny'},{'text':'Jonny loves Steve','mentions':['STEVE']}]
+res = splitSmartly(
+  'Peter loves Mary and Mary loves Johnny and Jonny loves Steve', 
+  'AND', 
+  { mentions: ['STEVE', 'PETER'] }
+ );
+// res: [
+//  {'text':'Peter loves Mary','mentions':['PETER']},
+//  {'text':'Mary loves Johnny'},
+//  {'text':'Jonny loves Steve','mentions':['STEVE']}
+//]
 ```
 
 #### 9 - using check option
