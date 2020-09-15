@@ -46,18 +46,16 @@ splitSmartly([text[, separators[, options]]])
 Without any options, splitSmartly function by default ignores separators inside quotes (to avoid such behaviour we can set ignoreInsideQuotes option to false)
 
 ```js
-res = splitSmartly('one _ two _ "three _ four" _ five _ six', '_');
+const string = 'one _ two _ "three _ four" _ five _ six'
+res = splitSmartly(string, '_');
 // res: ['one', 'two', '"three _ four"', 'five', 'six']
 ```
 
 #### 2 - call with brackets option set to true
 Set brackets option to true to prevent from searching separators inside brackets (round, square and figure ones)
 ```js
-res = splitSmartly(
-  '(one _ two) _ "three _ four" _ five _ six', 
-  '_', 
-  { brackets: true }
-);
+const string = '(one _ two) _ "three _ four" _ five _ six'
+res = splitSmartly(string, '_', { brackets: true });
 // res: ['(one _ two)', '"three _ four"', 'five', 'six']
 ```
 
@@ -69,12 +67,11 @@ Strings for bracket option can be assigned in next formats:
 '(),<< >>'
 
 ```js
-res = splitSmartly(
-  '(one / two) / "three / four" / <<five / six>>', 
-  '/', 
-  { brackets: { '(': ')', '<<': '>>' } }
-);
-// res: [
+const string = '(one / two) / "three / four" / <<five / six>>'
+const res1 = splitSmartly(string, '/', { brackets: [['(', ')'], ['<<', '>>']] })
+const res2 = splitSmartly(string, '/', { brackets: { '(': ')', '<<': '>>' } })
+const res3 = splitSmartly(string, '/', { brackets: '(), << >>' })
+// res1, res2, res3: [
 //  '(one / two)', 
 //  '"three / four"', 
 //  '<<five / six>>'
@@ -135,28 +132,37 @@ res = splitSmartly('select best FROM life', ['SELECT ', 'FROM '], { includeSepar
 #### 8 - call with mentions option
 Assign string or array of strings to mentions option to search these strings in each result string. Then function will return array of objects, where property text will have text between separators and if it includes one or more strings from mentions option it will have mentions property with array of found mentions.
 ```js
-res = splitSmartly(
-  'Peter loves Mary and Mary loves Johnny and Jonny loves Steve', 
-  'AND', 
-  { mentions: ['STEVE', 'PETER'] }
- );
+const string = 'Peter loves Mary and Mary loves Johnny and Jonny loves Steve'
+const mentions = ['STEVE', 'PETER']
+
+const res = splitSmartly(string, 'AND', { mentions });
 // res: [
-//  {'text':'Peter loves Mary','mentions':['PETER']},
-//  {'text':'Mary loves Johnny'},
-//  {'text':'Jonny loves Steve','mentions':['STEVE']}
+//  { text:'Peter loves Mary', mentions:['PETER']},
+//  {text:'Mary loves Johnny'},
+//  {text:'Jonny loves Steve', mentions:['STEVE']}
 //]
 ```
 
 #### 9 - using check option
-using callback function as check option we can reject to break string in position of separator occur. Check function get object as parameter, where will be passed the following keys: string, separator, textAfter, mentions
+Assign callback function to check option. This way in some conditions we can reject to break string in position of separator occur if our function will not return true. As first and only parameter check function get an object with the following keys: string, separator, textAfter, mentions
 
-In following we avoid to break string if separator AND is found right after BETWEEN
+In following code we avoid to break string if separator AND is found right after BETWEEN
 ```js
-res = splitSmartly('life is long AND love BETWEEN pleasure AND pain', 'AND', {
-  check: ({ separator, string }) => {
-    return !string.toUpperCase().includes(' BETWEEN ');
-  }
-});
+const string = 'life is long AND love BETWEEN pleasure AND pain'
+const check = ({ separator, string, textAfter, mentions }) => {
+  return !string.toUpperCase().includes(' BETWEEN ');
+}
+
+const res = splitSmartly(string, 'AND', { check });
+// res: ['life is long','love BETWEEN pleasure AND pain']
+```
+
+the same result we can get in a more beautiful way using mentions option
+```js
+const string = 'life is long AND love BETWEEN pleasure AND pain'
+const check = ({ mentions }) => !mentions.length
+
+const res = splitSmartly(string, 'AND', { check, mentions: ' BETWEEN ' });
 // res: ['life is long','love BETWEEN pleasure AND pain']
 ```
 
