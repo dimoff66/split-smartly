@@ -1,4 +1,4 @@
-# split-smartly [![NPM version](https://img.shields.io/npm/v/split-string.svg?style=flat)](https://www.npmjs.com/package/split-string) [![NPM monthly downloads](https://img.shields.io/npm/dm/split-string.svg?style=flat)](https://npmjs.org/package/split-string) [![NPM total downloads](https://img.shields.io/npm/dt/split-string.svg?style=flat)](https://npmjs.org/package/split-string)
+# split-smartly [![NPM version](https://img.shields.io/npm/v/split-smartly.svg?style=flat)](https://www.npmjs.com/package/split-smartly) [![NPM monthly downloads](https://img.shields.io/npm/dm/split-smartly.svg?style=flat)](https://npmjs.org/package/split-smartly) [![NPM total downloads](https://img.shields.io/npm/dt/split-smartly.svg?style=flat)](https://npmjs.org/package/split-smartly)
 
 > split strings by separator(s), ignoring text inside quotes and brackets. Can be easily tuned with a lot of flexible options
 
