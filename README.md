@@ -1,4 +1,4 @@
-# split-smartly
+# split-smartly [![NPM version](https://img.shields.io/npm/v/split-smartly.svg?style=flat)](https://www.npmjs.com/package/split-smartly) [![NPM monthly downloads](https://img.shields.io/npm/dm/split-smartly.svg?style=flat)](https://npmjs.org/package/split-smartly) [![NPM total downloads](https://img.shields.io/npm/dt/split-smartly.svg?style=flat)](https://npmjs.org/package/split-smartly)
 
 > split strings by separator(s), ignoring text inside quotes and brackets. Can be easily tuned with a lot of flexible options
 
@@ -157,7 +157,7 @@ const res = splitSmartly(string, 'AND', { check });
 // res: ['life is long','love BETWEEN pleasure AND pain']
 ```
 
-the same result we can get in a more beautiful way using mentions option
+the same result we can be achieved in a more beautiful way using mentions option
 ```js
 const string = 'life is long AND love BETWEEN pleasure AND pain'
 const check = ({ mentions }) => !mentions.length
@@ -195,7 +195,7 @@ using this syntax, we can skip second parameter, and in last parameter we can ju
 
 
 ### 12 - creating prepared split function
-we can prepare split function with some separators and parameters and later call it to split some text
+we can prepare split function with some separators and options and later call it to split some text
 ```js
 const splitQuery = splitSmartly(['SELECT ', 'FROM ', 'WHERE '], { brackets: true, includeSeparatorMode: 'RIGHT });
 
