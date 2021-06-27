@@ -1,0 +1,176 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`demos [
+  '(one / two) / "three / four" / <<five / six>>',
+  '/',
+  { brackets: '(), << >>' }
+] 1`] = `
+Array [
+  "(one / two)",
+  "\\"three / four\\"",
+  "<<five / six>>",
+]
+`;
+
+exports[`demos [
+  '(one / two) / "three / four" / <<five / six>>',
+  '/',
+  { brackets: [ [Array], [Array] ] }
+] 1`] = `
+Array [
+  "(one / two)",
+  "\\"three / four\\"",
+  "<<five / six>>",
+]
+`;
+
+exports[`demos [
+  '(one / two) / "three / four" / <<five / six>>',
+  '/',
+  { brackets: { '(': ')', '<<': '>>' } }
+] 1`] = `
+Array [
+  "(one / two)",
+  "\\"three / four\\"",
+  "<<five / six>>",
+]
+`;
+
+exports[`demos [
+  'Peter loves Mary and Mary loves Johnny and Jonny loves Steve',
+  'AND',
+  { mentions: [ 'STEVE', 'PETER' ] }
+] 1`] = `
+Array [
+  Object {
+    "mentions": Array [
+      "PETER",
+    ],
+    "text": "Peter loves Mary",
+  },
+  Object {
+    "text": "Mary loves Johnny",
+  },
+  Object {
+    "mentions": Array [
+      "STEVE",
+    ],
+    "text": "Jonny loves Steve",
+  },
+]
+`;
+
+exports[`demos [
+  'SELECT best FROM life',
+  [ 'SELECT ', 'FROM ' ],
+  { includeSeparatorMode: 'ONLY' }
+] 1`] = `
+Array [
+  "SELECT ",
+  "FROM ",
+]
+`;
+
+exports[`demos [
+  'SELECT best FROM life',
+  [ 'SELECT ', 'FROM ' ],
+  { includeSeparatorMode: 'RIGHT' }
+] 1`] = `
+Array [
+  Array [
+    "SELECT ",
+    "best",
+  ],
+  Array [
+    "FROM ",
+    "life",
+  ],
+]
+`;
+
+exports[`demos [
+  'SELECT best FROM life',
+  [ 'SELECT ', 'FROM ' ],
+  { includeSeparatorMode: 'SEPARATELY' }
+] 1`] = `
+Array [
+  "",
+  "SELECT ",
+  "best",
+  "FROM ",
+  "life",
+]
+`;
+
+exports[`demos [
+  'select best FROM life',
+  [ 'SELECT ', 'FROM ' ],
+  { includeSeparatorMode: 'RIGHT' }
+] 1`] = `
+Array [
+  Array [
+    "SELECT ",
+    "best",
+  ],
+  Array [
+    "FROM ",
+    "life",
+  ],
+]
+`;
+
+exports[`demos [
+  'select best FROM life',
+  [ 'SELECT ', 'FROM ' ],
+  { includeSeparatorMode: 'RIGHT', ignoreCase: false }
+] 1`] = `
+Array [
+  Array [
+    undefined,
+    "select best",
+  ],
+  Array [
+    "FROM ",
+    "life",
+  ],
+]
+`;
+
+exports[`demos [ 'One | Two | Three | Four', '|', { indexes: [ 1, 3 ] } ] 1`] = `
+Array [
+  "Two",
+  "Four",
+]
+`;
+
+exports[`demos [ 'One | Two | Three | Four', '|', { indexes: 2 } ] 1`] = `"Three"`;
+
+exports[`demos [ 'SELECT best FROM life', [ 'SELECT ', 'FROM ' ] ] 1`] = `
+Array [
+  "",
+  "best",
+  "life",
+]
+`;
+
+exports[`demos [ 'one _ two _ "three _ four" _ five _ six', '_' ] 1`] = `
+Array [
+  "one",
+  "two",
+  "\\"three _ four\\"",
+  "five",
+  "six",
+]
+`;
+
+exports[`demos [ 'one _ two _ "three _ four" _ five _ six', '_', { brackets: true } ] 1`] = `
+Array [
+  "one",
+  "two",
+  "\\"three _ four\\"",
+  "five",
+  "six",
+]
+`;
+
+exports[`demos [ 'p1: point first p2: point second', /p\\d:/gi ] 1`] = `[Function]`;
