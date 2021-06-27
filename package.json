@@ -2,14 +2,6 @@
   "name": "split-smartly",
   "version": "1.1.3",
   "description": "spliting text ignoring parts inside quotes, brackets and etc",
-  "main": "index",
-  "scripts": {
-    "test": "jest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/dimoff66/split-smartly.git"
-  },
   "keywords": [
     "split",
     "brackets",
@@ -17,23 +9,46 @@
     "smart",
     "regexp"
   ],
-  "author": "Reutov Dmitry",
-  "license": "MIT",
+  "homepage": "https://github.com/dimoff66/split-smartly#readme",
   "bugs": {
     "url": "https://github.com/dimoff66/split-smartly/issues"
   },
-  "homepage": "https://github.com/dimoff66/split-smartly#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dimoff66/split-smartly.git"
+  },
+  "license": "MIT",
+  "author": "Reutov Dmitry",
+  "main": "dist/index.js",
+  "module": "dist/split-smartly.esm.js",
+  "types": "dist/index.d.ts",
+  "typings": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build:dts": "dts-bundle-generator -o ./dist/index.d.ts ./src/index.ts --no-banner",
+    "test": "tsdx test",
+    "build": "tsdx build --target node && yarn run build:dts",
+    "npm:publish": "npm publish && yarn run postpublishOnly",
+    "npm:publish:bump": "yarn-tool version && npm publish && yarn run postpublishOnly",
+    "preversion": "echo preversion && yarn run build && yarn run test",
+    "postpublishOnly": "yarn run postpublish:changelog && yarn run postpublish:git:commit && yarn run postpublish:git:tag && yarn run postpublish:git:push",
+    "postpublish:changelog": "ynpx --quiet @yarn-tool/changelog && git add ./CHANGELOG.md",
+    "postpublish:git:commit": "git commit -m \"chore(release): publish\" . & echo postpublish:git:commit",
+    "postpublish:git:push": "git push --follow-tags",
+    "postpublish:git:tag": "ynpx --quiet @yarn-tool/tag",
+    "ncu": "yarn-tool ncu -u",
+    "sort-package-json": "yarn-tool sort"
+  },
+  "dependencies": {},
   "devDependencies": {
-    "@babel/cli": "^7.11.6",
-    "@babel/core": "^7.11.6",
-    "@babel/node": "^7.10.5",
-    "@babel/preset-env": "^7.11.5",
-    "jest": "^26.4.2"
-  },
-  "dependencies": {
-    "core-js": "^3.6.5"
-  },
-  "jest": {
-    "setupFiles": ["core-js"]
+    "dts-bundle-generator": "^5.9.0",
+    "@bluelovers/tsconfig": "^1.0.22",
+    "@types/jest": "^26.0.23",
+    "jest": "^27.0.5",
+    "tsdx": "npm:@bluelovers/tsdx",
+    "tslib": "^2.3.0"
   }
 }

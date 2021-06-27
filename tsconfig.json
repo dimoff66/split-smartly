@@ -1,0 +1,18 @@
+{
+  "extends": "@bluelovers/tsconfig/esm/module.json",
+  "compilerOptions": {
+    "importHelpers": true,
+    "sourceMap": true,
+    "rootDir": "./src",
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "declaration": false
+  },
+  "include": [
+    "./src/**/*.ts",
+    "./src/**/*.tsx"
+  ]
+}
